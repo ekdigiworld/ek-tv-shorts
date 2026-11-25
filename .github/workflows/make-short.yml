@@ -1,1 +1,126 @@
+name: Make short
 
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: "Name of the video"
+        default: fig-newton
+      stage:
+        description: "review (fast check) or full (render the whole video)"
+        type: choice
+        options: [review, full]
+        default: review
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      PROJECT: ${{ github.event.inputs.project }}
+      STAGE: ${{ github.event.inputs.stage }}
+      SOFTWARE_GL: "1"
+      QS: "&res=0.6&aa=0&shadow=1024"
+      FPS: "24"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Chrome
+        id: chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Let headless Chrome start
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
+
+      - name: Unpack the faceless-shorts tool
+        run: mkdir -p faceless-shorts && tar xzf faceless-shorts.tar.gz -C faceless-shorts
+
+      - name: Cache voice and caption models
+        uses: actions/cache@v4
+        with:
+          path: ~/.faceless-shorts
+          key: fs-models-${{ hashFiles('faceless-shorts.tar.gz') }}
+
+      - name: Setup
+        env:
+          CHROME: ${{ steps.chrome.outputs.chrome-path }}
+        run: bash faceless-shorts/scripts/setup.sh
+
+      - name: Create the project
+        run: |
+          STYLE=tall-tale
+          bash faceless-shorts/scripts/new_video.sh "$STYLE" "$PROJECT" --dir "$HOME/work"
+          SRC="projects/$PROJECT"; [ -f "$SRC/script.json" ] || SRC="."
+          cp "$SRC/script.json" "$HOME/work/$PROJECT/script.json"
+          cp "$SRC/shots.js" "$HOME/work/$PROJECT/src/shots.js"
+
+      - name: Voice and word timing
+        run: |
+          SK="$PWD/faceless-shorts/scripts"
+          cd "$HOME/work/$PROJECT"
+          "$SK/py" "$SK/voice.py" .
+          "$SK/py" "$SK/words.py" .
+
+      - name: Check, cues, mix, contact sheet, draft clip
+        env:
+          CHROME: ${{ steps.chrome.outputs.chrome-path }}
+        run: |
+          SK="$PWD/faceless-shorts/scripts"
+          cd "$HOME/work/$PROJECT"
+          node tools/capture.mjs check | tee review/check.txt
+          grep -q "CHECK OK" review/check.txt
+          node tools/capture.mjs cues
+          "$SK/py" tools/mix.py .
+          node tools/capture.mjs sheet review/all.jpg 1 8
+          node tools/capture.mjs video renders/draft.mp4 2 8 --draft
+
+      - name: Collect the review files
+        if: always()
+        run: |
+          mkdir -p out-review
+          cp -R "$HOME/work/$PROJECT/review/." out-review/ 2>/dev/null || true
+          cp "$HOME/work/$PROJECT/renders/draft.mp4" out-review/ 2>/dev/null || true
+          cp "$HOME/work/$PROJECT/data/lines.json" "$HOME/work/$PROJECT/data/words.json" out-review/ 2>/dev/null || true
+
+      - name: Upload the review files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-${{ github.event.inputs.project }}
+          path: out-review/
+
+      - name: Render the full video
+        if: github.event.inputs.stage == 'full'
+        env:
+          CHROME: ${{ steps.chrome.outputs.chrome-path }}
+        run: |
+          cd "$HOME/work/$PROJECT"
+          node tools/capture.mjs video renders/short.mp4
+          ffmpeg -y -loglevel error -i renders/short.mp4 -c:v libx264 -crf 21 -preset slow -c:a aac -b:a 160k -movflags +faststart renders/short-share.mp4
+          node tools/capture.mjs frames review/cover "1.0"
+
+      - name: Collect the video
+        if: github.event.inputs.stage == 'full'
+        run: |
+          mkdir -p out-video
+          cp "$HOME/work/$PROJECT/renders/short-share.mp4" out-video/
+          cp "$HOME/work/$PROJECT/review/"cover* out-video/ 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: github.event.inputs.stage == 'full'
+        with:
+          name: video-${{ github.event.inputs.project }}
+          path: out-video/
