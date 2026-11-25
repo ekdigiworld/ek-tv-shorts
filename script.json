@@ -1,0 +1,32 @@
+{
+  "title": "Why Fig Newtons Are Named After A Town",
+  "voice": "am_michael",
+  "speed": 1.05,
+  "lead": 0.3,
+  "outro": 1.2,
+  "gap": 0.18,
+  "music": "bounce",
+  "sources": [
+    "Wikipedia, 'Newtons (cookie)' (invented by Charles Roser; first baked 1891 at the F. A. Kennedy Steam Bakery, Cambridgeport, Massachusetts; plant manager James Hazen named it after the Boston suburb of Newton, Massachusetts)",
+    "UPI, 'The Fig Newton turns 100' (1991): Kennedy plant manager James Hazen had a penchant for naming new cookies after Massachusetts cities and towns; he named the fig creation the Newton",
+    "WBSM / ThoughtCo: the company had a habit of naming cookies after local towns and already had cookies named Beacon Hill, Harvard and Shrewsbury when the Newton was created",
+    "Straight Dope, 'Who or what are Fig Newton cookies named after?' (Nabisco: Kennedy Biscuit named all their products after surrounding communities, including 'Shrewsbury', 'Harvard', 'Beacon Hill')",
+    "GBH / History Cambridge (Jan 2026): not named for Sir Isaac Newton; Kennedy already had cookies and pastries named for local places",
+    "Caveat: Nabisco's own line is that the name came from 'either Sir Isaac Newton or the town of Newton'; historians and local sources say the town. Script says 'a habit', not 'all' of its cookies."
+  ],
+  "lines": [
+    { "text": "Lots of people think Fig Newtons were named after Isaac Newton, the apple guy." },
+    { "text": "But nope, they're named after a town in Massachusetts." },
+    { "text": "See, back in 1891, a man named Charles Roser", "caps": "See, back in | 1891, | a man | named | Charles Roser" },
+    { "text": "came up with a cookie stuffed with fig paste," },
+    { "text": "and the Kennedy Biscuit Works, in Cambridgeport, started baking them." },
+    { "text": "Now, that bakery had a habit, where it named its cookies after places nearby." },
+    { "text": "So you could buy Beacon Hill cookies," },
+    { "text": "Harvard cookies," },
+    { "text": "and Shrewsbury cookies." },
+    { "text": "So when plant manager James Hazen needed a name for the fig one," },
+    { "text": "he picked a town nearby: Newton." },
+    { "text": "Which means every Fig Newton you've ever eaten" },
+    { "text": "is basically a tiny map of Boston.", "gap": 0.3 }
+  ]
+}
